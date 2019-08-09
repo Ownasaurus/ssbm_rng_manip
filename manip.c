@@ -434,6 +434,8 @@ int rng_allstar(uint32_t *seed, AllstarBitmask *abm) {
     return 0; 
 }
 
+// e is the entry you chose from the database list
+// base_seed is the hex of your seed
 void calculate_rng_distance(ConfigEntry *e, uint32_t base_seed) {
     uint32_t i;
     uint32_t delay = -1;
@@ -515,6 +517,26 @@ void calculate_rng_distance(ConfigEntry *e, uint32_t base_seed) {
         if (answer == 'y' || answer == 'Y') {
             for (int i=0; i<24; i++) { ALLSTAR_TABLE[i] = ALLSTAR_TABLE_TEMP[i]; }
         }
+    }
+}
+
+void calculate_path_to_target_seed(uint32_t base_seed, uint32_t target_seed) {
+    uint32_t i;
+    for(i=0; i<0xFFFFFFFF; i++) {
+        if (base_seed == target_seed) {
+            printf("%u iterations away on seed 0x%08X\n", i, base_seed);
+
+            float seconds = ((float)i/4833.9);
+            if (seconds >= 60.0) {
+                uint32_t minutes;
+                for (minutes=0; seconds>=60.0; minutes++) { seconds-= 60.0; }
+                printf("Open two character windows for %d mins, %.2f seconds\n", minutes, seconds);
+            } else {
+                printf("Open two character windows for %.2f seconds\n", seconds);
+            }
+            break;
+        }
+        rng_adv(&base_seed);
     }
 }
 
@@ -661,10 +683,11 @@ int main() {
         printf("  y    Start New Search\n");
         printf("  n    Manually enter in an RNG seed\n");
         printf("  l    Continue search from last seed detected\n");
+        printf("  g    Go to a given seed\n");
         printf("  x    Exit the program\n");
         printf(" -> ");
         scanf("%c", &answer);
-        uint32_t seed;
+        uint32_t seed, target_seed;
         int quick = 1;
         int valid = 0;
         if (answer == 'x' || answer == 'X') { break; }
@@ -680,11 +703,23 @@ int main() {
             valid = 1;
             quick = 0;
         }
+        if (answer == 'g' || answer == 'G') {
+            valid = 1;
+            printf("Target seed? 0x");
+            scanf("%08x", &target_seed);
+            seed = seed_find(quick, 0x00000001);
+            calculate_path_to_target_seed(seed, target_seed);
+            first_run = 1;
+            continue;
+        }
         if (!valid) { 
             printf(" !! Invalid entry detected !!\n");
             printf("Only valid inputs: y/n/l/x\n");
             continue; 
         }
+        
+        // at this point seed_find returned the seed you are on. seed = that
+        
         last_seed = rng_event_search(seed, quick);
         first_run = 1;
     }
