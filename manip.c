@@ -541,6 +541,7 @@ void calculate_path_to_target_seed(uint32_t base_seed, uint32_t target_seed) {
 }
 
 int rng_event_search(uint32_t seed, int quick) {
+    printf("Your seed = 0x%08x\n", seed);
     FILE *fp;
     printf("Opening manip.cfg...");
     fp = fopen("manip.cfg","r");
@@ -676,9 +677,6 @@ int main() {
     while (1) {
         while ((getchar()) != '\n');
         char answer;
-        if (first_run != 0) {
-            printf("Last seed: 0x%08x\n", last_seed);
-        }
         printf("Locate seed? [y]es / [n]o / [l]ast / e[x]it\n");
         printf("  y    Start New Search\n");
         printf("  n    Manually enter in an RNG seed\n");
